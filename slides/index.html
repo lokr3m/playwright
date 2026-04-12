@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playwright – E2E Test Automation</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#0f0c29;color:#e0e0e0;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;padding:40px 20px;}
+h1{color:#4fc3f7;font-size:1.6em;text-align:center;margin-bottom:.3em;}
+.subtitle{text-align:center;color:#888;font-size:.80em;margin-bottom:3em;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;max-width:900px;margin:0 auto;}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:24px;text-decoration:none;color:inherit;transition:all .2s;position:relative;overflow:hidden;}
+.card:hover{background:rgba(79,195,247,.1);border-color:#4fc3f7;transform:translateY(-2px);}
+.card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--accent,#4fc3f7);}
+.lesson-num{font-size:.58em;letter-spacing:3px;text-transform:uppercase;color:#888;margin-bottom:.4em;}
+.lesson-title{font-size:.92em;font-weight:600;color:#fff;margin-bottom:.5em;}
+.topics{font-size:.62em;color:#aaa;line-height:1.6;}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.55em;border:1px solid currentColor;margin:2px;}
+.hw-badge{position:absolute;top:16px;right:16px;font-size:.53em;background:rgba(79,195,247,.15);color:#4fc3f7;border:1px solid #4fc3f7;padding:2px 8px;border-radius:10px;}
+.l1{--accent:#4fc3f7;} .l2{--accent:#81c784;} .l3{--accent:#ffb74d;}
+footer{text-align:center;color:#555;font-size:.65em;margin-top:3em;}
+</style>
+</head>
+<body>
+<h1>Playwright – E2E Test Automation</h1>
+<p class="subtitle">3 Lessons · Kriso.ee · Page Object Model · CI/CD</p>
+
+<div class="grid">
+
+  <a href="lesson-10.html" class="card l1">
+    <div class="hw-badge">HW 10</div>
+    <div class="lesson-num">Lesson 10</div>
+    <div class="lesson-title">E2E Testing &amp; Playwright</div>
+    <div class="topics">
+      <span class="tag" style="color:#4fc3f7">E2E</span>
+      <span class="tag" style="color:#4fc3f7">Playwright</span>
+      <span class="tag" style="color:#4fc3f7">Selectors</span>
+      <span class="tag" style="color:#4fc3f7">Kriso.ee</span>
+    </div>
+  </a>
+
+  <a href="lesson-11.html" class="card l2">
+    <div class="hw-badge">HW 11</div>
+    <div class="lesson-num">Lesson 11</div>
+    <div class="lesson-title">Page Object Model</div>
+    <div class="topics">
+      <span class="tag" style="color:#81c784">POM</span>
+      <span class="tag" style="color:#81c784">Fixtures</span>
+      <span class="tag" style="color:#81c784">Refactor</span>
+    </div>
+  </a>
+
+  <a href="lesson-12.html" class="card l3">
+    <div class="hw-badge">HW 12</div>
+    <div class="lesson-num">Lesson 12</div>
+    <div class="lesson-title">CI/CD &amp; Test Reporting</div>
+    <div class="topics">
+      <span class="tag" style="color:#ffb74d">GitHub Actions</span>
+      <span class="tag" style="color:#ffb74d">HTML Report</span>
+      <span class="tag" style="color:#ffb74d">Artifacts</span>
+    </div>
+  </a>
+
+</div>
+
+<footer>Playwright Course · Open any lesson to begin · Use → to navigate slides</footer>
+</body>
+</html>
