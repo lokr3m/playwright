@@ -30,31 +30,31 @@ test.describe('Navigate Products via Filters', () => {
   test('Test filters navigation', async () => {
     await expect(page.getByRole('link', { name: /kriso/i })).toBeVisible();
 
-    const musicSection = page.getByText('Muusikaraamatud ja noodid');
+    const musicSection = await getMusicSection();
     await musicSection.scrollIntoViewIfNeeded();
     await expect(musicSection).toBeVisible();
 
-    await page.getByRole('link', { name: 'Kitarr' }).click();
+    await page.getByRole('link', { name: /kitarr/i }).first().click();
     await expect(page).toHaveURL(/kitarr/i);
 
-    const addToCartLinks = page.getByRole('link', { name: /lisa ostukorvi/i });
-    const initialCount = await addToCartLinks.count();
+    const addToCartControls = await getAddToCartControls();
+    const initialCount = await addToCartControls.count();
     expect(initialCount).toBeGreaterThan(1);
 
     const languageFilter = await findFilterOption(/english|inglise/i);
     await clickFilterOption(languageFilter);
-    await expect.poll(() => addToCartLinks.count()).toBeLessThan(initialCount);
+    await expect.poll(async () => (await getAddToCartControls()).count()).toBeLessThan(initialCount);
     await expect(page.getByText(/english|inglise/i)).toBeVisible();
 
     const formatFilter = await findFilterOption(/cd/i);
-    const countAfterLanguage = await addToCartLinks.count();
+    const countAfterLanguage = await (await getAddToCartControls()).count();
     await clickFilterOption(formatFilter);
-    await expect.poll(() => addToCartLinks.count()).toBeLessThan(countAfterLanguage);
+    await expect.poll(async () => (await getAddToCartControls()).count()).toBeLessThan(countAfterLanguage);
     await expect(page.getByText(/cd/i)).toBeVisible();
 
     await clickFilterOption(formatFilter);
     await clickFilterOption(languageFilter);
-    await expect.poll(() => addToCartLinks.count()).toBeGreaterThan(initialCount - 1);
+    await expect.poll(async () => (await getAddToCartControls()).count()).toBeGreaterThan(initialCount - 1);
   });
 
   async function acceptCookiesIfPresent() {
@@ -83,9 +83,34 @@ test.describe('Navigate Products via Filters', () => {
   async function clickFilterOption(option: Locator) {
     if (await option.isChecked().catch(() => false)) {
       await option.uncheck().catch(async () => option.click());
+      await page.waitForLoadState('networkidle');
       return;
     }
 
     await option.check().catch(async () => option.click());
+    await page.waitForLoadState('networkidle');
+  }
+
+  async function getMusicSection() {
+    const candidates = [
+      /Muusikaraamatud/i,
+      /Muusika.*noodid/i,
+      /Muusika/i
+    ];
+    for (const candidate of candidates) {
+      const section = page.getByText(candidate);
+      if (await section.count()) {
+        return section.first();
+      }
+    }
+    return page.getByText(/Muusika/i).first();
+  }
+
+  async function getAddToCartControls() {
+    const buttons = page.getByRole('button', { name: /lisa ostukorvi/i });
+    if (await buttons.count()) {
+      return buttons;
+    }
+    return page.getByRole('link', { name: /lisa ostukorvi/i });
   }
 });

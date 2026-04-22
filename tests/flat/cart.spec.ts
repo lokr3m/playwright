@@ -37,8 +37,8 @@ test.describe('Add Books to Shopping Cart', () => {
 
   test('Test search by keyword', async () => {
     await searchFor('harry potter');
-    const addToCartLinks = page.getByRole('link', { name: /lisa ostukorvi/i });
-    const total = await addToCartLinks.count();
+    const addToCartControls = await getAddToCartControls();
+    const total = await addToCartControls.count();
     expect(total).toBeGreaterThan(1);
   }); 
 
@@ -46,14 +46,14 @@ test.describe('Add Books to Shopping Cart', () => {
     [firstItemTitle, secondItemTitle] = await getFirstTwoTitles();
     expect(firstItemTitle).not.toEqual('');
     expect(secondItemTitle).not.toEqual('');
-    await page.getByRole('link', { name: /lisa ostukorvi/i }).first().click();
+    await (await getAddToCartControls()).first().click();
     await expect(page.getByText(/toode lisati ostukorvi/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /ostukorv/i })).toContainText('1');
     await closeMiniCartIfPresent();
   }); 
 
   test('Test add second book to cart', async () => {
-    await page.getByRole('link', { name: /lisa ostukorvi/i }).nth(1).click();
+    await (await getAddToCartControls()).nth(1).click();
     await expect(page.getByText(/toode lisati ostukorvi/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /ostukorv/i })).toContainText('2');
   }); 
@@ -91,9 +91,31 @@ test.describe('Add Books to Shopping Cart', () => {
   }
 
   async function searchFor(keyword: string) {
-    const searchBox = page.getByRole('textbox', { name: /pealkiri, autor, isbn/i });
+    const searchBox = await getSearchBox();
     await searchBox.fill(keyword);
-    await page.getByRole('button', { name: /search/i }).click();
+    const searchButton = page.getByRole('button', { name: /search|otsi/i });
+    if (await searchButton.count()) {
+      await searchButton.first().click();
+    } else {
+      await searchBox.press('Enter');
+    }
+    await page.waitForLoadState('networkidle');
+  }
+
+  async function getSearchBox() {
+    const byPlaceholder = page.getByPlaceholder(/pealkiri, autor, isbn/i);
+    if (await byPlaceholder.count()) {
+      return byPlaceholder.first();
+    }
+    return page.getByRole('textbox', { name: /pealkiri, autor, isbn/i }).first();
+  }
+
+  async function getAddToCartControls() {
+    const buttons = page.getByRole('button', { name: /lisa ostukorvi/i });
+    if (await buttons.count()) {
+      return buttons;
+    }
+    return page.getByRole('link', { name: /lisa ostukorvi/i });
   }
 
   async function closeMiniCartIfPresent() {
