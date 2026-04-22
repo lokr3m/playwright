@@ -9,21 +9,23 @@
  * Tip: run `npx playwright codegen https://www.kriso.ee` to discover selectors.
  */
 import { test, expect } from '@playwright/test';
-import type { Page } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
 
 test.describe.configure({ mode: 'serial' });
 
 let page: Page;
 let basketSumOfTwo = 0;
+let firstItemTitle = '';
+let secondItemTitle = '';
 
 test.describe('Add Books to Shopping Cart', () => {
 
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext();
     page = await context.newPage();
-    await page.goto('https://www.kriso.ee/');
+    await page.goto('/');
 
-    await page.getByRole('button', { name: 'Nõustun' }).click();
+    await acceptCookiesIfPresent(page);
   });
 
   test.afterAll(async () => {
@@ -31,74 +33,143 @@ test.describe('Add Books to Shopping Cart', () => {
   });
 
   test('Test logo is visible', async () => {
-    const logo = page.locator('.logo-icon');
-    await expect(logo).toBeVisible();
+    await expect(page.getByRole('link', { name: /kriso/i })).toBeVisible();
   }); 
 
   test('Test search by keyword', async () => {
-    await page.getByRole('textbox', { name: 'Pealkiri, autor, ISBN, märksõ' }).click();
-    await page.getByRole('textbox', { name: 'Pealkiri, autor, ISBN, märksõ' }).fill('harry potter');
-    await page.getByRole('button', { name: 'Search' }).click();
+    await searchFor(page, 'harry potter');
 
-    // parse numeric total from the results text and assert it's > 1
-    const resultsText = await page.locator('.sb-results-total').textContent();
-    const total = Number((resultsText || '').replace(/\D/g, '')) || 0;
+    const results = getProductCards(page);
+    await expect(results.first()).toBeVisible();
+    const total = await results.count();
     expect(total).toBeGreaterThan(1);
   }); 
 
   test('Test add book to cart', async () => {
-    await page.getByRole('link', { name: 'Lisa ostukorvi' }).first().click();
-    await expect(page.locator('.item-messagebox')).toContainText('Toode lisati ostukorvi');
-    await expect(page.locator('.cart-products')).toContainText('1');
-    await page.locator('.cartbtn-event.back').click();
+    const results = getProductCards(page);
+    firstItemTitle = await getProductTitle(results.first());
+    await results.first().getByRole('link', { name: /lisa ostukorvi/i }).click();
+    await expect(page.getByText(/toode lisati ostukorvi/i)).toBeVisible();
+    await expect(getCartIndicator(page)).toContainText('1');
+    await continueShopping(page);
   }); 
 
   test('Test add second book to cart', async () => {
-    await page.getByRole('link', { name: 'Lisa ostukorvi' }).nth(5).click();
-    await expect(page.locator('.item-messagebox')).toContainText('Toode lisati ostukorvi');
-    await expect(page.locator('.cart-products')).toContainText('2');
+    const results = getProductCards(page);
+    secondItemTitle = await getProductTitle(results.nth(1));
+    await results.nth(1).getByRole('link', { name: /lisa ostukorvi/i }).click();
+    await expect(page.getByText(/toode lisati ostukorvi/i)).toBeVisible();
+    await expect(getCartIndicator(page)).toContainText('2');
   }); 
 
   test('Test cart count and sum is correct', async () => {
-    await page.locator('.cartbtn-event.forward').click();
-    await expect(page.locator('.order-qty > .o-value')).toContainText('2');
+    await openCart(page);
+    await expect(page.getByText(firstItemTitle)).toBeVisible();
+    await expect(page.getByText(secondItemTitle)).toBeVisible();
 
-    basketSumOfTwo = await returnBasketSum();
-    let basketSumTotal = await returnBasketSumTotal();
+    basketSumOfTwo = await returnBasketSum(page);
+    const basketSumTotal = await returnBasketSumTotal(page);
 
+    expect(basketSumOfTwo).toBeGreaterThan(0);
     expect(basketSumTotal).toBeCloseTo(basketSumOfTwo, 2);
   }); 
 
 
   test('Test remove item from cart and counter sum is correct', async () => {
-    await page.locator('.icon-remove').nth(0).click();
-    await expect(page.locator('.order-qty > .o-value')).toContainText('1');
+    await removeFirstItem(page);
+    await expect(page.getByText(firstItemTitle)).toHaveCount(0);
 
-    let basketSumOfOne = await returnBasketSum();
-    let basketSumTotal = await returnBasketSumTotal();
+    const basketSumOfOne = await returnBasketSum(page);
+    const basketSumTotal = await returnBasketSumTotal(page);
     
     expect(basketSumTotal).toBeCloseTo(basketSumOfOne, 2);
     expect(basketSumOfOne).toBeLessThan(basketSumOfTwo);
   });
 
-  async function returnBasketSum() {
-    let basketSum = 0;
-
-    let cartItems = await page.locator('.tbl-row > .subtotal').all();
-
-    for (const item of cartItems) {
-      const text = await item.textContent();
-      const price = Number((text || '').replace(/[^0-9.,]+/g, '').replace(',', '.')) || 0;
-      basketSum += price;
-    }
-
-    return basketSum;
-  };
-
-  async function returnBasketSumTotal() {
-    let basketSumTotalText = await page.locator('.order-total > .o-value').textContent();
-    let basketSumTotal = Number((basketSumTotalText || '').replace(/[^0-9.,]+/g, '').replace(',', '.')) || 0;
-    return basketSumTotal;
-  };
-
 }); 
+
+const acceptCookiesIfPresent = async (page: Page) => {
+  const consent = page.getByRole('button', { name: /nõustun|nõustu|accept|ok/i });
+  if (await consent.first().isVisible().catch(() => false)) {
+    await consent.first().click();
+  }
+};
+
+const searchFor = async (page: Page, keyword: string) => {
+  await page.getByPlaceholder(/pealkiri, autor, isbn|search/i).fill(keyword);
+  await page.getByRole('button', { name: /search|otsi/i }).click();
+};
+
+const getProductCards = (page: Page) =>
+  page.getByRole('listitem').filter({ has: page.getByRole('link', { name: /lisa ostukorvi/i }) });
+
+const getProductTitle = async (card: Locator) => {
+  const links = card.getByRole('link');
+  const linkCount = await links.count();
+  for (let i = 0; i < linkCount; i += 1) {
+    const text = (await links.nth(i).innerText()).trim();
+    if (!/lisa ostukorvi/i.test(text)) {
+      return text;
+    }
+  }
+  return '';
+};
+
+const getCartIndicator = (page: Page) => page.getByRole('link', { name: /ostukorv|cart/i });
+
+const continueShopping = async (page: Page) => {
+  const button = page.getByRole('button', { name: /jätka|continue|tagasi|back/i });
+  if (await button.first().isVisible().catch(() => false)) {
+    await button.first().click();
+  }
+};
+
+const openCart = async (page: Page) => {
+  const link = page.getByRole('link', { name: /ostukorv|cart/i });
+  if (await link.first().isVisible().catch(() => false)) {
+    await link.first().click();
+    return;
+  }
+  const button = page.getByRole('button', { name: /ostukorv|cart/i });
+  if (await button.first().isVisible().catch(() => false)) {
+    await button.first().click();
+  }
+};
+
+const removeFirstItem = async (page: Page) => {
+  await page.getByRole('button', { name: /eemalda|remove|delete|kustuta/i }).first().click();
+};
+
+const returnBasketSum = async (page: Page) => {
+  const rows = page.getByRole('row').filter({ hasText: /€|\bEUR\b/ });
+  const count = await rows.count();
+  let basketSum = 0;
+  for (let i = 0; i < count; i += 1) {
+    const rowText = await rows.nth(i).innerText();
+    if (/kokku|total|summa/i.test(rowText)) {
+      continue;
+    }
+    basketSum += parsePrice(rowText);
+  }
+  return basketSum;
+};
+
+const returnBasketSumTotal = async (page: Page) => {
+  const totalRow = page.getByRole('row', { name: /kokku|total|summa/i });
+  if (await totalRow.first().isVisible().catch(() => false)) {
+    return parsePrice(await totalRow.first().textContent());
+  }
+  return parsePrice(await page.getByText(/kokku|total|summa/i).first().textContent());
+};
+
+const parsePrice = (text: string | null) => {
+  if (!text) {
+    return 0;
+  }
+  const match = text.match(/(\d+[.,]\d{2})/);
+  if (match) {
+    return Number(match[1].replace(',', '.'));
+  }
+  const cleaned = text.replace(/[^0-9,.\-]/g, '').replace(',', '.');
+  return Number(cleaned) || 0;
+};
