@@ -9,9 +9,83 @@
  * Tip: run `npx playwright codegen https://www.kriso.ee` to discover selectors.
  */
 import { test, expect } from '@playwright/test';
+import type { Page, Locator } from '@playwright/test';
+
+test.describe.configure({ mode: 'serial' });
+
+let page: Page;
 
 test.describe('Navigate Products via Filters', () => {
+  test.beforeAll(async ({ browser }) => {
+    const context = await browser.newContext();
+    page = await context.newPage();
+    await page.goto('https://www.kriso.ee/');
+    await acceptCookiesIfPresent();
+  });
 
-  // TODO: implement tests
+  test.afterAll(async () => {
+    await page.context().close();
+  });
 
+  test('Test filters navigation', async () => {
+    await expect(page.getByRole('link', { name: /kriso/i })).toBeVisible();
+
+    const musicSection = page.getByText('Muusikaraamatud ja noodid');
+    await musicSection.scrollIntoViewIfNeeded();
+    await expect(musicSection).toBeVisible();
+
+    await page.getByRole('link', { name: 'Kitarr' }).click();
+    await expect(page).toHaveURL(/kitarr/i);
+
+    const addToCartLinks = page.getByRole('link', { name: /lisa ostukorvi/i });
+    const initialCount = await addToCartLinks.count();
+    expect(initialCount).toBeGreaterThan(1);
+
+    const languageFilter = await findFilterOption(/english|inglise/i);
+    await clickFilterOption(languageFilter);
+    await expect.poll(() => addToCartLinks.count()).toBeLessThan(initialCount);
+    await expect(page.getByText(/english|inglise/i)).toBeVisible();
+
+    const formatFilter = await findFilterOption(/cd/i);
+    const countAfterLanguage = await addToCartLinks.count();
+    await clickFilterOption(formatFilter);
+    await expect.poll(() => addToCartLinks.count()).toBeLessThan(countAfterLanguage);
+    await expect(page.getByText(/cd/i)).toBeVisible();
+
+    await clickFilterOption(formatFilter);
+    await clickFilterOption(languageFilter);
+    await expect.poll(() => addToCartLinks.count()).toBeGreaterThan(initialCount - 1);
+  });
+
+  async function acceptCookiesIfPresent() {
+    const acceptButton = page.getByRole('button', { name: /nõustun/i });
+    try {
+      await acceptButton.click({ timeout: 5000 });
+    } catch {
+      // Cookie banner not shown.
+    }
+  }
+
+  async function findFilterOption(name: RegExp) {
+    const byLabel = page.getByLabel(name);
+    if (await byLabel.count()) {
+      return byLabel.first();
+    }
+
+    const byCheckbox = page.getByRole('checkbox', { name });
+    if (await byCheckbox.count()) {
+      return byCheckbox.first();
+    }
+
+    return page.getByText(name).first();
+  }
+
+  async function clickFilterOption(option: Locator) {
+    if (await option.isChecked().catch(() => false)) {
+      await option.uncheck().catch(async () => option.click());
+      return;
+    }
+
+    await option.check().catch(async () => option.click());
+  }
 });
