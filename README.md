@@ -4,7 +4,7 @@ E2E test automation for [Kriso.ee](https://www.kriso.ee) bookshop using [Playwri
 
 **Slides:** https://tanjaq.github.io/playwright-kriso/slides/
 
-Your task is to create automated tests based on the test cases described below.
+Your task is to create automated tests and a CI pipeline based on the descriptions below.
 
 ---
 
@@ -44,18 +44,24 @@ Your task is to create automated tests based on the test cases described below.
 
 ```
 tests/
-  kriso.spec.ts       ← Part I: flat tests (no POM)
-  kriso-pom.spec.ts   ← Part II: same tests using Page Object Model
-  fixtures.ts         ← Part II: injects page objects into tests
+  flat/
+    search.spec.ts      ← Task 1: flat tests — Search for Books by Keywords
+    cart.spec.ts        ← Task 1: flat tests — Add Books to Shopping Cart
+    filters.spec.ts     ← Task 1: flat tests — Navigate Products via Filters
+  pom/
+    search.pom.spec.ts  ← Task 2: POM tests — Search for Books by Keywords
+    cart.pom.spec.ts    ← Task 2: POM tests — Add Books to Shopping Cart
+    filters.pom.spec.ts ← Task 2: POM tests — Navigate Products via Filters
 
-pages/                ← Part II: Page Object Model classes
-  HomePage.ts
-  SearchPage.ts
-  ProductPage.ts
-  CartPage.ts
+pages/                  ← Task 2: Page Object Model classes
+  HomePage.ts           ← home page, search, add to cart
+  CartPage.ts           ← cart quantities, totals, remove items
+  ProductPage.ts        ← product detail page
 
 .github/workflows/
-  playwright.yml      ← CI pipeline (runs on push and pull request)
+  playwright.yml        ← Task 3: CI pipeline (fill in the TODOs)
+
+playwright.config.ts    ← Playwright configuration
 ```
 
 ### Useful commands
@@ -67,6 +73,9 @@ npx playwright test --ui
 # Headed mode — watch the browser
 npx playwright test --headed
 
+# Run only a specific test file
+npx playwright test tests/flat/cart.spec.ts
+
 # Record new tests against Kriso
 npx playwright codegen https://www.kriso.ee
 
@@ -74,25 +83,21 @@ npx playwright codegen https://www.kriso.ee
 npx playwright show-report
 ```
 
-> **Tip:** Use only semantic selectors — `getByRole`, `getByText`, `getByPlaceholder`, `getByLabel`. No CSS class selectors. No XPath.
-
 ---
 
 ## Test Cases
 
-### Part I — Flat Tests (`tests/kriso.spec.ts`)
+### Task 1 — Flat Tests (`tests/flat/`)
 
 #### Search for Books by Keywords
 
 | Steps | Expected Result (Assertions) |
 |-------|------------------------------|
 | Open https://www.kriso.ee | Confirm the page has a Kriso title/logo |
-| Search for keyword "harry potter" | Confirm multiple products are shown |
+| Search for keyword "xqzwmfkj" | Confirm no products are shown |
+| Search for keyword "tolkien" | Confirm multiple products are shown |
 | | All listed items contain the searched keyword in their title or description |
-| | Products can be sorted |
-| Sort results by price | Verify products are sorted in the expected order (e.g., low to high or high to low) |
-| Filter by language (e.g., English) | Verify only products in that language appear |
-| Filter by format (e.g., "Kõvakaaneline" / hardback) | Confirm fewer items are listed and all match the selected format |
+| Search for book by ISBN "9780307588371" | Confirm correct book "Gone Girl" is shown |
 
 #### Add Books to Shopping Cart
 
@@ -116,22 +121,38 @@ npx playwright show-report
 |-------|------------------------------|
 | Open https://www.kriso.ee | Confirm the page has a Kriso title/logo |
 | Scroll down to find a section like "Muusikaraamatud ja noodid" | Confirm the section is visible |
-| Click the "Õppematerjalid" category | Verify that there are more than 1 products found |
+| Click the "Kitarr" category | Verify that there are more than 1 products found |
 | | Confirm URL or page title reflects navigation correctly |
-| Click on a category ("Bänd ja ansambel") | Confirm active filters show the selected category |
+| Filter by language (e.g., English) | Confirm filter is applied  |
 | | Verify products list now contains less items |
 | Click on a format category ("CD") | Confirm active filters show the selected category |
 | | Verify products list now contains less items |
+| Remove the active filters | Confirm results item count goes up |
 
 ---
 
-### Part II — Page Object Model (`tests/kriso-pom.spec.ts`)
+### Task 2 — Page Object Model (`tests/pom/`)
 
-Refactor your Part I tests to use the Page Object Model:
+Refactor your Task 1 tests to use the Page Object Model:
 
-- Create page classes in `pages/` (already scaffolded)
-- Use `tests/fixtures.ts` to inject page objects automatically
-- No raw selectors in test files — all locators live in page classes
-- The CI pipeline in `.github/workflows/playwright.yml` is already set up — push your code and confirm the run goes green
+- All locators and actions live in page classes under `pages/` — no raw selectors in test files
+- All POM test files use `beforeAll` + `test.describe.configure({ mode: 'serial' })`, the same pattern as `cart.pom.spec.ts`
 
-> **Reminder:** Open a PR and paste the passing CI link in the description. That's how you submit.
+---
+
+### Task 3 — CI/CD Pipeline (`.github/workflows/playwright.yml`)
+
+Complete the scaffolded workflow file so your tests run automatically in the cloud on every push and pull request.
+
+**The pipeline must:**
+
+- Trigger on push to `main` and on pull requests targeting `main`
+- Run on a Linux machine
+- Install Node.js and npm dependencies
+- Install the Playwright browser binaries
+- Execute all tests
+- Upload the HTML report as an artifact (even when tests fail)
+
+Open `.github/workflows/playwright.yml` — each step has a `# TODO` comment explaining what to add. Fill in the blanks, push, then open the **Actions** tab in your GitHub repository to confirm the run goes green.
+
+> **Submitting:** copy the URL of the passing Actions run and paste it into your Pull Request description.
