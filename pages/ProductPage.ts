@@ -1,16 +1,12 @@
 import { Page, Locator } from '@playwright/test';
 
 export class ProductPage {
-  readonly addToCartLinks: Locator;
-  readonly addedToCartMessage: Locator;
+  // TODO: define locators
 
   constructor(private page: Page) {
-    this.addToCartLinks = page.getByRole('link', { name: /lisa ostukorvi/i });
-    this.addedToCartMessage = page.getByText(/toode lisati ostukorvi/i);
+    // TODO: initialize locators
   }
 
-  async addFirstToCart() {
-    await this.addToCartLinks.first().click();
-    await this.addedToCartMessage.first().waitFor();
-  }
+  // TODO: implement action methods (e.g. addToCart)
+  // TODO: add locator getters for assertions
 }
