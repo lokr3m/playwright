@@ -8,8 +8,8 @@
  *
  * Tip: run `npx playwright codegen https://www.kriso.ee` to discover selectors.
  */
-import { test, expect, type Page, type BrowserContext } from '@playwright/test';
-import { cartLinkExclusionPattern } from '../../utils/cartSelectors';
+import { test, expect, type Page, type BrowserContext, type Locator } from '@playwright/test';
+import { cartLinkExclusionPattern, parsePrice } from '../../utils/cartSelectors';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -142,7 +142,7 @@ async function getCartItemTitles(page: Page) {
   return uniqueTitles(await itemLinks.allTextContents());
 }
 
-async function getTitlesFromContainers(containers: ReturnType<Page['getByRole']>) {
+async function getTitlesFromContainers(containers: Locator) {
   if ((await containers.count()) === 0) {
     return [];
   }
@@ -174,8 +174,4 @@ async function getCartTotal(page: Page) {
 
 async function removeCartItem(page: Page, index: number) {
   await page.getByRole('button', { name: /Eemalda|Remove|Kustuta|×/i }).nth(index).click();
-}
-
-function parsePrice(text: string | null) {
-  return Number((text || '').replace(/[^0-9.,]+/g, '').replace(',', '.')) || 0;
 }

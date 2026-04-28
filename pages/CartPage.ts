@@ -1,5 +1,5 @@
 import { Page, Locator } from '@playwright/test';
-import { cartLinkExclusionPattern } from '../utils/cartSelectors';
+import { cartLinkExclusionPattern, parsePrice } from '../utils/cartSelectors';
 
 export class CartPage {
   readonly heading: Locator;
@@ -49,14 +49,14 @@ export class CartPage {
       .allTextContents();
 
     return priceTexts
-      .map((text) => this.parsePrice(text))
+      .map((text) => parsePrice(text))
       .filter((price) => price > 0)
       .reduce((sum, price) => sum + price, 0);
   }
 
   async getTotal() {
     const totalText = await this.totalText.last().textContent();
-    return this.parsePrice(totalText);
+    return parsePrice(totalText);
   }
 
   async removeItemByIndex(index: number) {
@@ -77,7 +77,4 @@ export class CartPage {
     return Array.from(new Set(cleaned));
   }
 
-  private parsePrice(text: string | null) {
-    return Number((text || '').replace(/[^0-9.,]+/g, '').replace(',', '.')) || 0;
-  }
 }
