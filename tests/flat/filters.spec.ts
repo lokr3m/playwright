@@ -12,6 +12,47 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Navigate Products via Filters', () => {
 
-  // TODO: implement tests
+  const baseUrl = 'https://www.kriso.ee/';
+  const addToCartName = /Lisa ostukorvi/i;
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto(baseUrl);
+    const consent = page.getByRole('button', { name: /Nõustun|Accept/i });
+    if (await consent.isVisible()) {
+      await consent.click();
+    }
+  });
+
+  test('Navigate and filter products', async ({ page }) => {
+    await expect(page.getByRole('link', { name: /kriso/i })).toBeVisible();
+
+    const section = page.getByText('Muusikaraamatud ja noodid');
+    await section.scrollIntoViewIfNeeded();
+    await expect(section).toBeVisible();
+
+    await page.getByText('Kitarr', { exact: true }).click();
+    await expect(page).toHaveURL(/kitarr/i);
+
+    const initialCount = await page.getByRole('link', { name: addToCartName }).count();
+    expect(initialCount).toBeGreaterThan(1);
+
+    const languageFilter = page.getByLabel(/English|Inglise/i);
+    await languageFilter.click();
+    const afterLanguageCount = await page.getByRole('link', { name: addToCartName }).count();
+    expect(afterLanguageCount).toBeLessThan(initialCount);
+
+    await page.getByText('CD', { exact: true }).click();
+    await expect(page.getByText('CD', { exact: true })).toBeVisible();
+    const afterFormatCount = await page.getByRole('link', { name: addToCartName }).count();
+    expect(afterFormatCount).toBeLessThan(afterLanguageCount);
+
+    const clearFiltersButton = page.getByRole('button', { name: /Tühjenda|Eemalda|Clear/i });
+    if (await clearFiltersButton.count()) {
+      await clearFiltersButton.first().click();
+    }
+
+    const clearedCount = await page.getByRole('link', { name: addToCartName }).count();
+    expect(clearedCount).toBeGreaterThan(afterFormatCount);
+  });
 
 });
