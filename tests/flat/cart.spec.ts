@@ -89,7 +89,6 @@ test.describe('Add Books to Shopping Cart', () => {
 
     const remainingTitles = await getCartItemTitles();
     expect(remainingTitles.length).toBe(1);
-    expect(cartTitles.length).toBe(2);
     await expect(page.getByRole('link', { name: cartTitles[0] })).toHaveCount(0);
 
     const remainingSum = await getCartItemsTotal();

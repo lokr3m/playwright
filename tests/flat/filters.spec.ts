@@ -48,7 +48,8 @@ test.describe('Navigate Products via Filters', () => {
     expect(afterFormatCount).toBeLessThan(afterLanguageCount);
 
     const clearFiltersButton = page.getByRole('button', { name: /Tühjenda|Eemalda|Clear/i });
-    if (await clearFiltersButton.count() > 0) {
+    const clearFiltersCount = await clearFiltersButton.count();
+    if (clearFiltersCount > 0) {
       await clearFiltersButton.first().click();
     }
 

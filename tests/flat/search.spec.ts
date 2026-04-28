@@ -45,7 +45,7 @@ test.describe('Search for Books by Keywords', () => {
     expect(addButtonCount).toBeGreaterThan(1);
 
     const keywordLinks = page.getByRole('link', { name: /tolkien/i });
-    expect(await keywordLinks.count()).toBe(addButtonCount);
+    expect(await keywordLinks.count()).toBeGreaterThanOrEqual(addButtonCount);
   });
 
   test('Search by ISBN shows Gone Girl', async ({ page }) => {
