@@ -13,7 +13,7 @@ import { SearchPage } from '../../pages/SearchPage';
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Search for Books by Keywords (POM)', () => {
-  const nonExistentQuery = 'xqzwmfkj';
+  const NON_EXISTENT_SEARCH_QUERY = 'xqzwmfkj';
   let context: BrowserContext;
   let page: Page;
   let home: HomePage;
@@ -39,7 +39,7 @@ test.describe('Search for Books by Keywords (POM)', () => {
 
   test('Search for gibberish keyword shows no results', async () => {
     await home.goto();
-    await home.search(nonExistentQuery);
+    await home.search(NON_EXISTENT_SEARCH_QUERY);
     expect(await search.getResultCount()).toBe(0);
   });
 

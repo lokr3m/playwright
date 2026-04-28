@@ -9,7 +9,7 @@
  * Tip: run `npx playwright codegen https://www.kriso.ee` to discover selectors.
  */
 import { test, expect, type Page, type BrowserContext, type Locator } from '@playwright/test';
-import { cartLinkExclusionPattern, parsePrice } from '../../utils/cartSelectors';
+import { cartItemLinkExclusionPattern, parsePrice, uniqueTitles } from '../../utils/cartSelectors';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -137,7 +137,7 @@ async function getCartItemTitles(page: Page) {
   }
 
   const itemLinks = page.getByRole('link').filter({
-    hasNotText: cartLinkExclusionPattern,
+    hasNotText: cartItemLinkExclusionPattern,
   });
   return uniqueTitles(await itemLinks.allTextContents());
 }
@@ -150,10 +150,6 @@ async function getTitlesFromContainers(containers: Locator) {
   return uniqueTitles(await containers.getByRole('link').allTextContents());
 }
 
-function uniqueTitles(titles: string[]) {
-  const cleaned = titles.map((title) => title.trim()).filter(Boolean);
-  return Array.from(new Set(cleaned));
-}
 
 async function getCartLineTotal(page: Page) {
   const priceTexts = await page

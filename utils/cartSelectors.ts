@@ -1,5 +1,10 @@
-export const cartLinkExclusionPattern =
+export const cartItemLinkExclusionPattern =
   /Ostukorv|Kriso|Jätka|Checkout|Eemalda|Remove|Kustuta|Tagasi|Back|Search/i;
+
+export function uniqueTitles(titles: string[]) {
+  const cleaned = titles.map((title) => title.trim()).filter(Boolean);
+  return Array.from(new Set(cleaned));
+}
 
 export function parsePrice(text: string | null) {
   const cleaned = (text || '').replace(/[^0-9.,]+/g, '');

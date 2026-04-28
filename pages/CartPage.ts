@@ -1,5 +1,5 @@
 import { Page, Locator } from '@playwright/test';
-import { cartLinkExclusionPattern, parsePrice } from '../utils/cartSelectors';
+import { cartItemLinkExclusionPattern, parsePrice, uniqueTitles } from '../utils/cartSelectors';
 
 export class CartPage {
   readonly heading: Locator;
@@ -28,10 +28,10 @@ export class CartPage {
     }
 
     const fallbackLinks = this.page.getByRole('link').filter({
-      hasNotText: cartLinkExclusionPattern,
+      hasNotText: cartItemLinkExclusionPattern,
     });
 
-    return this.uniqueTitles(await fallbackLinks.allTextContents());
+    return uniqueTitles(await fallbackLinks.allTextContents());
   }
 
   async getItemCount() {
@@ -69,12 +69,7 @@ export class CartPage {
     }
 
     const titles = await containers.getByRole('link').allTextContents();
-    return this.uniqueTitles(titles);
-  }
-
-  private uniqueTitles(titles: string[]) {
-    const cleaned = titles.map((title) => title.trim()).filter(Boolean);
-    return Array.from(new Set(cleaned));
+    return uniqueTitles(titles);
   }
 
 }
