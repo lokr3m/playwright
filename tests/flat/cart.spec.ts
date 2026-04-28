@@ -47,13 +47,13 @@ test.describe('Add Books to Shopping Cart', () => {
     await page.getByPlaceholder(searchPlaceholder).fill('harry potter');
     await page.getByRole('button', { name: searchButtonName }).click();
 
-    const addButtons = page.getByRole('link', { name: addToCartName });
+    const addButtons = await getAddToCartItems();
     const addButtonCount = await addButtons.count();
     expect(addButtonCount).toBeGreaterThan(1);
   }); 
 
   test('Test add book to cart', async () => {
-    await page.getByRole('link', { name: addToCartName }).first().click();
+    await (await getAddToCartItems()).first().click();
     await expect(page.getByText(/Toode lisati ostukorvi/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /Ostukorv/i })).toContainText('1');
 
@@ -64,7 +64,7 @@ test.describe('Add Books to Shopping Cart', () => {
   }); 
 
   test('Test add second book to cart', async () => {
-    await page.getByRole('link', { name: addToCartName }).last().click();
+    await (await getAddToCartItems()).last().click();
     await expect(page.getByText(/Toode lisati ostukorvi/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /Ostukorv/i })).toContainText('2');
   }); 
@@ -89,7 +89,7 @@ test.describe('Add Books to Shopping Cart', () => {
 
     const remainingTitles = await getCartItemTitles();
     expect(remainingTitles.length).toBe(1);
-    expect(cartTitles[0]).toBeDefined();
+    expect(cartTitles.length).toBe(2);
     await expect(page.getByRole('link', { name: cartTitles[0] })).toHaveCount(0);
 
     const remainingSum = await getCartItemsTotal();
@@ -134,6 +134,14 @@ test.describe('Add Books to Shopping Cart', () => {
     return parsePrice(totals[totals.length - 1]);
   }
 
+  async function getAddToCartItems() {
+    const addButtons = page.getByRole('button', { name: addToCartName });
+    if (await addButtons.count() > 0) {
+      return addButtons;
+    }
+    return page.getByRole('link', { name: addToCartName });
+  }
+
   function parsePrice(text?: string | null) {
     if (!text) {
       return 0;
@@ -142,8 +150,21 @@ test.describe('Add Books to Shopping Cart', () => {
     if (!currencyMatch) {
       return 0;
     }
-    const value = (currencyMatch[1] || currencyMatch[2]).replace(',', '.');
-    return Number(value);
+    const rawValue = currencyMatch[1] || currencyMatch[2];
+    const normalized = normalizeNumber(rawValue);
+    return Number(normalized);
+  }
+
+  function normalizeNumber(value: string) {
+    if (value.includes(',') && value.includes('.')) {
+      const lastComma = value.lastIndexOf(',');
+      const lastDot = value.lastIndexOf('.');
+      if (lastComma > lastDot) {
+        return value.replace(/\./g, '').replace(',', '.');
+      }
+      return value.replace(/,/g, '');
+    }
+    return value.replace(',', '.');
   }
 
 }); 

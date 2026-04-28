@@ -9,6 +9,7 @@
  * Tip: run `npx playwright codegen https://www.kriso.ee` to discover selectors.
  */
 import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 test.describe('Navigate Products via Filters', () => {
 
@@ -33,26 +34,34 @@ test.describe('Navigate Products via Filters', () => {
     await page.getByText('Kitarr', { exact: true }).click();
     await expect(page).toHaveURL(/kitarr/i);
 
-    const initialCount = await page.getByRole('link', { name: addToCartName }).count();
+    const initialCount = await (await getAddToCartItems(page)).count();
     expect(initialCount).toBeGreaterThan(1);
 
     const languageFilter = page.getByLabel(/English|Inglise/i);
     await languageFilter.click();
-    const afterLanguageCount = await page.getByRole('link', { name: addToCartName }).count();
+    const afterLanguageCount = await (await getAddToCartItems(page)).count();
     expect(afterLanguageCount).toBeLessThan(initialCount);
 
     await page.getByText('CD', { exact: true }).click();
     await expect(page.getByText('CD', { exact: true })).toBeVisible();
-    const afterFormatCount = await page.getByRole('link', { name: addToCartName }).count();
+    const afterFormatCount = await (await getAddToCartItems(page)).count();
     expect(afterFormatCount).toBeLessThan(afterLanguageCount);
 
     const clearFiltersButton = page.getByRole('button', { name: /Tühjenda|Eemalda|Clear/i });
-    if (await clearFiltersButton.count()) {
+    if (await clearFiltersButton.count() > 0) {
       await clearFiltersButton.first().click();
     }
 
-    const clearedCount = await page.getByRole('link', { name: addToCartName }).count();
+    const clearedCount = await (await getAddToCartItems(page)).count();
     expect(clearedCount).toBeGreaterThan(afterFormatCount);
   });
+
+  async function getAddToCartItems(page: Page) {
+    const addButtons = page.getByRole('button', { name: addToCartName });
+    if (await addButtons.count() > 0) {
+      return addButtons;
+    }
+    return page.getByRole('link', { name: addToCartName });
+  }
 
 });

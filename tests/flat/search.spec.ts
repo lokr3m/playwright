@@ -9,6 +9,7 @@
  * Tip: run `npx playwright codegen https://www.kriso.ee` to discover selectors.
  */
 import { test, expect } from '@playwright/test';
+import type { Page } from '@playwright/test';
 
 test.describe('Search for Books by Keywords', () => {
 
@@ -32,14 +33,14 @@ test.describe('Search for Books by Keywords', () => {
   test('Search for random keyword shows no products', async ({ page }) => {
     await page.getByPlaceholder(searchPlaceholder).fill('xqzwmfkj');
     await page.getByRole('button', { name: searchButtonName }).click();
-    await expect(page.getByRole('link', { name: addToCartName })).toHaveCount(0);
+    await expect(await getAddToCartItems(page)).toHaveCount(0);
   });
 
   test('Search for Tolkien shows multiple matching products', async ({ page }) => {
     await page.getByPlaceholder(searchPlaceholder).fill('tolkien');
     await page.getByRole('button', { name: searchButtonName }).click();
 
-    const addButtons = page.getByRole('link', { name: addToCartName });
+    const addButtons = await getAddToCartItems(page);
     const addButtonCount = await addButtons.count();
     expect(addButtonCount).toBeGreaterThan(1);
 
@@ -52,5 +53,13 @@ test.describe('Search for Books by Keywords', () => {
     await page.getByRole('button', { name: searchButtonName }).click();
     await expect(page.getByRole('link', { name: /Gone Girl/i })).toBeVisible();
   });
+
+  async function getAddToCartItems(page: Page) {
+    const addButtons = page.getByRole('button', { name: addToCartName });
+    if (await addButtons.count() > 0) {
+      return addButtons;
+    }
+    return page.getByRole('link', { name: addToCartName });
+  }
 
 });
