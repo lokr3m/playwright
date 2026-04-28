@@ -39,14 +39,14 @@ test.describe('Navigate Products via Filters (POM)', () => {
     const initialCount = await search.getResultCount();
     expect(initialCount).toBeGreaterThan(1);
 
-    const languageFilter = search.getLanguageFilter(/English|Inglise/i);
+    const languageFilter = search.getFilter(/English|Inglise/i);
     await languageFilter.check();
     await expect(languageFilter).toBeChecked();
 
     const languageCount = await search.getResultCount();
     expect(languageCount).toBeLessThan(initialCount);
 
-    const formatFilter = search.getFormatFilter(/CD/i);
+    const formatFilter = search.getFilter(/CD/i);
     await formatFilter.check();
     await expect(formatFilter).toBeChecked();
 

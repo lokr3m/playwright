@@ -123,11 +123,35 @@ async function openCart(page: Page) {
 }
 
 async function getCartItemTitles(page: Page) {
+  const listItems = page.getByRole('listitem');
+  const listTitles = await getTitlesFromContainers(listItems);
+  if (listTitles.length) {
+    return listTitles;
+  }
+
+  const rowItems = page.getByRole('row');
+  const rowTitles = await getTitlesFromContainers(rowItems);
+  if (rowTitles.length) {
+    return rowTitles;
+  }
+
   const itemLinks = page.getByRole('link').filter({
     hasNotText: /Ostukorv|Kriso|Jätka|Checkout|Eemalda|Remove|Kustuta|Tagasi|Back|Search/i,
   });
-  const titles = (await itemLinks.allTextContents()).map((title) => title.trim()).filter(Boolean);
-  return Array.from(new Set(titles));
+  return uniqueTitles(await itemLinks.allTextContents());
+}
+
+async function getTitlesFromContainers(containers: ReturnType<Page['getByRole']>) {
+  if ((await containers.count()) === 0) {
+    return [];
+  }
+
+  return uniqueTitles(await containers.getByRole('link').allTextContents());
+}
+
+function uniqueTitles(titles: string[]) {
+  const cleaned = titles.map((title) => title.trim()).filter(Boolean);
+  return Array.from(new Set(cleaned));
 }
 
 async function getCartLineTotal(page: Page) {

@@ -5,21 +5,32 @@ export class CartPage {
   readonly removeButtons: Locator;
   readonly priceTexts: Locator;
   readonly totalText: Locator;
-  readonly itemLinks: Locator;
 
   constructor(private page: Page) {
     this.heading = page.getByRole('heading', { name: /Ostukorv|Cart/i });
     this.removeButtons = page.getByRole('button', { name: /Eemalda|Remove|Kustuta|×/i });
     this.priceTexts = page.getByText(/€|EUR/i);
     this.totalText = page.getByText(/Kokku|Total/i);
-    this.itemLinks = page.getByRole('link').filter({
-      hasNotText: /Ostukorv|Kriso|Jätka|Checkout|Eemalda|Remove|Kustuta|Tagasi|Back|Search/i,
-    });
   }
 
   async getItemTitles() {
-    const titles = (await this.itemLinks.allTextContents()).map((title) => title.trim()).filter(Boolean);
-    return Array.from(new Set(titles));
+    const listItems = this.page.getByRole('listitem');
+    const listTitles = await this.getTitlesFromContainers(listItems);
+    if (listTitles.length) {
+      return listTitles;
+    }
+
+    const rowItems = this.page.getByRole('row');
+    const rowTitles = await this.getTitlesFromContainers(rowItems);
+    if (rowTitles.length) {
+      return rowTitles;
+    }
+
+    const fallbackLinks = this.page.getByRole('link').filter({
+      hasNotText: /Ostukorv|Kriso|Jätka|Checkout|Eemalda|Remove|Kustuta|Tagasi|Back|Search/i,
+    });
+
+    return this.uniqueTitles(await fallbackLinks.allTextContents());
   }
 
   async getItemCount() {
@@ -49,6 +60,20 @@ export class CartPage {
 
   async removeItemByIndex(index: number) {
     await this.removeButtons.nth(index).click();
+  }
+
+  private async getTitlesFromContainers(containers: Locator) {
+    if ((await containers.count()) === 0) {
+      return [];
+    }
+
+    const titles = await containers.getByRole('link').allTextContents();
+    return this.uniqueTitles(titles);
+  }
+
+  private uniqueTitles(titles: string[]) {
+    const cleaned = titles.map((title) => title.trim()).filter(Boolean);
+    return Array.from(new Set(cleaned));
   }
 
   private parsePrice(text: string | null) {

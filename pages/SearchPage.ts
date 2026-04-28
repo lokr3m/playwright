@@ -58,11 +58,7 @@ export class SearchPage {
     }
   }
 
-  getLanguageFilter(label: RegExp) {
-    return this.page.getByLabel(label);
-  }
-
-  getFormatFilter(label: RegExp) {
+  getFilter(label: RegExp) {
     return this.page.getByLabel(label);
   }
 }
