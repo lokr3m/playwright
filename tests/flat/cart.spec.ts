@@ -163,7 +163,15 @@ test.describe('Add Books to Shopping Cart', () => {
       }
       return value.replace(/,/g, '');
     }
-    return value.replace(',', '.');
+    if (value.includes(',') || value.includes('.')) {
+      const separator = value.includes(',') ? ',' : '.';
+      const parts = value.split(separator);
+      if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+        return parts.join('');
+      }
+      return separator === ',' ? value.replace(',', '.') : value;
+    }
+    return value;
   }
 
 }); 
