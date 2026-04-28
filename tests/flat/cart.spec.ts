@@ -64,7 +64,7 @@ test.describe('Add Books to Shopping Cart', () => {
   }); 
 
   test('Test add second book to cart', async () => {
-    await page.getByRole('link', { name: addToCartName }).nth(1).click();
+    await page.getByRole('link', { name: addToCartName }).last().click();
     await expect(page.getByText(/Toode lisati ostukorvi/i)).toBeVisible();
     await expect(page.getByRole('link', { name: /Ostukorv/i })).toContainText('2');
   }); 
@@ -89,9 +89,8 @@ test.describe('Add Books to Shopping Cart', () => {
 
     const remainingTitles = await getCartItemTitles();
     expect(remainingTitles.length).toBe(1);
-    if (cartTitles[0]) {
-      await expect(page.getByRole('link', { name: cartTitles[0] })).toHaveCount(0);
-    }
+    expect(cartTitles[0]).toBeDefined();
+    await expect(page.getByRole('link', { name: cartTitles[0] })).toHaveCount(0);
 
     const remainingSum = await getCartItemsTotal();
     const remainingTotal = await getCartTotal();
@@ -139,11 +138,11 @@ test.describe('Add Books to Shopping Cart', () => {
     if (!text) {
       return 0;
     }
-    const matches = text.match(/[\d,.]+/g);
-    if (!matches || matches.length === 0) {
+    const currencyMatch = text.match(/([\d,.]+)\s*(?:€|EUR)|(?:€|EUR)\s*([\d,.]+)/);
+    if (!currencyMatch) {
       return 0;
     }
-    const value = matches[matches.length - 1].replace(',', '.');
+    const value = (currencyMatch[1] || currencyMatch[2]).replace(',', '.');
     return Number(value);
   }
 
