@@ -9,6 +9,7 @@
  * Tip: run `npx playwright codegen https://www.kriso.ee` to discover selectors.
  */
 import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { cartLinkExclusionPattern } from '../../utils/cartSelectors';
 
 test.describe.configure({ mode: 'serial' });
 
@@ -136,7 +137,7 @@ async function getCartItemTitles(page: Page) {
   }
 
   const itemLinks = page.getByRole('link').filter({
-    hasNotText: /Ostukorv|Kriso|Jätka|Checkout|Eemalda|Remove|Kustuta|Tagasi|Back|Search/i,
+    hasNotText: cartLinkExclusionPattern,
   });
   return uniqueTitles(await itemLinks.allTextContents());
 }

@@ -1,4 +1,5 @@
 import { Page, Locator } from '@playwright/test';
+import { cartLinkExclusionPattern } from '../utils/cartSelectors';
 
 export class CartPage {
   readonly heading: Locator;
@@ -27,7 +28,7 @@ export class CartPage {
     }
 
     const fallbackLinks = this.page.getByRole('link').filter({
-      hasNotText: /Ostukorv|Kriso|Jätka|Checkout|Eemalda|Remove|Kustuta|Tagasi|Back|Search/i,
+      hasNotText: cartLinkExclusionPattern,
     });
 
     return this.uniqueTitles(await fallbackLinks.allTextContents());

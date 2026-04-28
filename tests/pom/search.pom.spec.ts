@@ -13,6 +13,7 @@ import { SearchPage } from '../../pages/SearchPage';
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Search for Books by Keywords (POM)', () => {
+  const noResultsQuery = 'xqzwmfkj';
   let context: BrowserContext;
   let page: Page;
   let home: HomePage;
@@ -38,7 +39,7 @@ test.describe('Search for Books by Keywords (POM)', () => {
 
   test('Search for gibberish keyword shows no results', async () => {
     await home.goto();
-    await home.search('xqzwmfkj');
+    await home.search(noResultsQuery);
     expect(await search.getResultCount()).toBe(0);
   });
 
