@@ -13,6 +13,7 @@ export class HomePage extends BasePage {
   private readonly forwardButton: Locator;
   private readonly noResultsMessage: Locator;
   private readonly pageBody: Locator;
+  private readonly fallbackSearchTerms = ['harry potter', 'tolkien'];
 
   constructor(page: Page) {
     super(page);
@@ -101,23 +102,20 @@ export class HomePage extends BasePage {
   }
 
   private async ensureAddToCartLinksAvailable() {
-    if (await this.hasVisibleAddToCartLinks()) {
-      return;
+    for (const term of this.fallbackSearchTerms) {
+      if (await this.hasVisibleAddToCartLinks()) {
+        return;
+      }
+
+      await this.searchByKeyword(term);
     }
-
-    await this.searchByKeyword('harry potter');
-
-    if (await this.hasVisibleAddToCartLinks()) {
-      return;
-    }
-
-    await this.searchByKeyword('tolkien');
   }
 
   private async hasVisibleAddToCartLinks(): Promise<boolean> {
     const count = await this.addToCartLinks.count();
+    const maxChecks = Math.min(count, 20);
 
-    for (let index = 0; index < count; index += 1) {
+    for (let index = 0; index < maxChecks; index += 1) {
       if (await this.addToCartLinks.nth(index).isVisible().catch(() => false)) {
         return true;
       }
@@ -129,8 +127,9 @@ export class HomePage extends BasePage {
   private async clickVisibleAddToCartByIndex(index: number) {
     const count = await this.addToCartLinks.count();
     const visibleIndexes: number[] = [];
+    const maxChecks = Math.min(count, 20);
 
-    for (let i = 0; i < count; i += 1) {
+    for (let i = 0; i < maxChecks; i += 1) {
       if (await this.addToCartLinks.nth(i).isVisible().catch(() => false)) {
         visibleIndexes.push(i);
       }

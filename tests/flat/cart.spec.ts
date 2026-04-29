@@ -114,16 +114,12 @@ test.describe('Add Books to Shopping Cart', () => {
 
   async function addToCartByIndex(index: number) {
     const addToCartLinks = page.getByRole('link', { name: /Lisa ostukorvi|Add to cart/i });
-    let count = await addToCartLinks.count();
-
-    if (count === 0) {
-      await searchFor('tolkien');
-      count = await addToCartLinks.count();
-    }
+    const count = await addToCartLinks.count();
 
     const visibleIndexes: number[] = [];
+    const maxChecks = Math.min(count, 20);
 
-    for (let i = 0; i < count; i += 1) {
+    for (let i = 0; i < maxChecks; i += 1) {
       if (await addToCartLinks.nth(i).isVisible().catch(() => false)) {
         visibleIndexes.push(i);
       }
