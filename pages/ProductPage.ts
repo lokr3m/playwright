@@ -1,12 +1,11 @@
-import { Page, Locator } from '@playwright/test';
+import { Page } from '@playwright/test';
+import { BasePage } from './BasePage';
 
-export class ProductPage {
-  // TODO: define locators
+export class ProductPage extends BasePage {
 
-  constructor(private page: Page) {
-    // TODO: initialize locators
+  constructor(page: Page) {
+    super(page);
   }
 
-  // TODO: implement action methods (e.g. addToCart)
-  // TODO: add locator getters for assertions
+  // TODO: define locators and implement action methods
 }

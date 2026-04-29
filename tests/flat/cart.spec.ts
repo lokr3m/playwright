@@ -21,8 +21,8 @@ test.describe('Add Books to Shopping Cart', () => {
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext();
     page = await context.newPage();
-    await page.goto('https://www.kriso.ee/');
 
+    await page.goto('https://www.kriso.ee/');
     await page.getByRole('button', { name: 'Nõustun' }).click();
   });
 
