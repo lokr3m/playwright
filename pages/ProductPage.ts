@@ -2,6 +2,7 @@ import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from './BasePage';
 
 export class ProductPage extends BasePage {
+  private readonly searchBaseUrl = 'https://www.kriso.ee/cgi-bin/shop/searchbooks.html';
   private readonly resultsTotal: Locator;
   private readonly body: Locator;
 
@@ -20,7 +21,7 @@ export class ProductPage extends BasePage {
     }
 
     await this.page.goto(
-      'https://www.kriso.ee/cgi-bin/shop/searchbooks.html?tt=&database=musicsales&instrument=Guitar',
+      this.buildSearchUrl({ tt: '', database: 'musicsales', instrument: 'Guitar' }),
       { waitUntil: 'domcontentloaded' },
     );
   }
@@ -34,7 +35,7 @@ export class ProductPage extends BasePage {
     }
 
     await this.page.goto(
-      'https://www.kriso.ee/cgi-bin/shop/searchbooks.html?database=musicsales&instrument=Guitar&mlanguage=English',
+      this.buildSearchUrl({ database: 'musicsales', instrument: 'Guitar', mlanguage: 'English' }),
       { waitUntil: 'domcontentloaded' },
     );
   }
@@ -48,7 +49,12 @@ export class ProductPage extends BasePage {
     }
 
     await this.page.goto(
-      'https://www.kriso.ee/cgi-bin/shop/searchbooks.html?database=musicsales&instrument=Guitar&mlanguage=English&format=CD',
+      this.buildSearchUrl({
+        database: 'musicsales',
+        instrument: 'Guitar',
+        mlanguage: 'English',
+        format: 'CD',
+      }),
       { waitUntil: 'domcontentloaded' },
     );
   }
@@ -70,5 +76,10 @@ export class ProductPage extends BasePage {
     for (let i = 0; i < times; i += 1) {
       await this.page.goBack();
     }
+  }
+
+  private buildSearchUrl(params: Record<string, string>) {
+    const searchParams = new URLSearchParams(params);
+    return `${this.searchBaseUrl}?${searchParams.toString()}`;
   }
 }

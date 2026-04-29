@@ -13,10 +13,6 @@ export class HomePage extends BasePage {
   private readonly forwardButton: Locator;
   private readonly noResultsMessage: Locator;
   private readonly pageBody: Locator;
-  private readonly fallbackProducts = [
-    'https://www.kriso.ee/gone-girl-novel-db-9780307588371.html',
-    'https://www.kriso.ee/fellowship-ring-film-tie-edition-db-9780008802370.html',
-  ];
 
   constructor(page: Page) {
     super(page);
@@ -151,12 +147,6 @@ export class HomePage extends BasePage {
       await this.addToCartLinks.nth(safeIndex).click();
       return;
     }
-
-    const fallbackUrl = this.fallbackProducts[Math.min(index, this.fallbackProducts.length - 1)];
-    await this.page.goto(fallbackUrl, { waitUntil: 'domcontentloaded' });
-
-    const fallbackAddToCart = this.page.getByRole('link', { name: /Lisa ostukorvi|Add to cart/i }).first();
-    await expect(fallbackAddToCart).toBeVisible();
-    await fallbackAddToCart.click();
+    throw new Error('No add-to-cart links found on the page.');
   }
 }

@@ -114,7 +114,13 @@ test.describe('Add Books to Shopping Cart', () => {
 
   async function addToCartByIndex(index: number) {
     const addToCartLinks = page.getByRole('link', { name: /Lisa ostukorvi|Add to cart/i });
-    const count = await addToCartLinks.count();
+    let count = await addToCartLinks.count();
+
+    if (count === 0) {
+      await searchFor('tolkien');
+      count = await addToCartLinks.count();
+    }
+
     const visibleIndexes: number[] = [];
 
     for (let current = 0; current < count; current += 1) {
@@ -133,10 +139,7 @@ test.describe('Add Books to Shopping Cart', () => {
       return;
     }
 
-    await page.goto('https://www.kriso.ee/gone-girl-novel-db-9780307588371.html', {
-      waitUntil: 'domcontentloaded',
-    });
-    await page.getByRole('link', { name: /Lisa ostukorvi|Add to cart/i }).first().click();
+    throw new Error('No add-to-cart links found on the page.');
   }
 
   async function returnBasketSum() {
