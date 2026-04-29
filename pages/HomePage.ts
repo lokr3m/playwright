@@ -130,9 +130,9 @@ export class HomePage extends BasePage {
     const count = await this.addToCartLinks.count();
     const visibleIndexes: number[] = [];
 
-    for (let current = 0; current < count; current += 1) {
-      if (await this.addToCartLinks.nth(current).isVisible().catch(() => false)) {
-        visibleIndexes.push(current);
+    for (let currentIndex = 0; currentIndex < count; currentIndex += 1) {
+      if (await this.addToCartLinks.nth(currentIndex).isVisible().catch(() => false)) {
+        visibleIndexes.push(currentIndex);
       }
     }
 
