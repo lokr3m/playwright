@@ -123,9 +123,9 @@ test.describe('Add Books to Shopping Cart', () => {
 
     const visibleIndexes: number[] = [];
 
-    for (let currentIndex = 0; currentIndex < count; currentIndex += 1) {
-      if (await addToCartLinks.nth(currentIndex).isVisible().catch(() => false)) {
-        visibleIndexes.push(currentIndex);
+    for (let i = 0; i < count; i += 1) {
+      if (await addToCartLinks.nth(i).isVisible().catch(() => false)) {
+        visibleIndexes.push(i);
       }
     }
 
