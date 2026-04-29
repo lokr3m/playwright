@@ -147,24 +147,53 @@ export class HomePage extends BasePage {
     return false;
   }
 
-private async clickVisibleAddToCartByIndex(index: number) {
-  // Wait for results page
-  await expect(this.resultsTotal.first()).toBeVisible({ timeout: 15_000 });
+  private async clickVisibleAddToCartByIndex(index: number) {
+    // Wait for results page
+    await expect(this.resultsTotal.first()).toBeVisible({ timeout: 15_000 });
 
-  // Click product title link from results grid.
-  const productLinks = this.page.locator('.product-content a');
+    // Pick a "product-like" link on the results page without relying on DOM classes
+    // or specific keywords (tolkien/harry potter/etc).
+    const allLinks = this.page.getByRole('link');
+    const total = await allLinks.count();
 
-  await expect(productLinks.first()).toBeVisible({ timeout: 15_000 });
+    const candidateIndexes: number[] = [];
+    const maxChecks = Math.min(total, 140);
 
-  const count = await productLinks.count();
-  if (count === 0) {
-    throw new Error('No product links found in results (expected .product-content a).');
-  }
+    for (let i = 0; i < maxChecks; i += 1) {
+      const link = allLinks.nth(i);
 
-  const safeIndex = Math.min(index, count - 1);
-  await productLinks.nth(safeIndex).click();
+      const text = ((await link.innerText().catch(() => '')) || '').trim();
+      if (!text) continue;
 
-    // Now on product page: click add-to-cart
+      const lower = text.toLowerCase();
+
+      // Skip obvious header/nav links
+      if (
+        /bestsellers|e-platforms|books in stock|help|log in|new account|categories|books|e-books|music books|language teaching materials|special offers|advanced search|shopping basket|wish list|your account|eng/.test(
+          lower
+        )
+      ) {
+        continue;
+      }
+
+      // Product titles are usually not super short
+      if (text.length < 6) continue;
+
+      if (await link.isVisible().catch(() => false)) {
+        candidateIndexes.push(i);
+      }
+
+      if (candidateIndexes.length >= 25) break;
+    }
+
+    if (candidateIndexes.length === 0) {
+      throw new Error('No product-like links found on the results page.');
+    }
+
+    const safe = Math.min(index, candidateIndexes.length - 1);
+    await allLinks.nth(candidateIndexes[safe]).click();
+
+    // Now on product page: click add-to-cart (multiple fallbacks)
     const addToCart = this.page
       .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i })
       .or(this.page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i }))

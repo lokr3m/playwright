@@ -45,17 +45,17 @@ test.describe('Add Books to Shopping Cart', () => {
   });
 
   test('Test add book to cart', async () => {
-  // ensure we are on a results page with products
-  await searchFor('tolkien');
+    // ensure we are on a results page with products
+    await searchFor('tolkien');
 
-  await addToCartByIndex(0);
+    await addToCartByIndex(0);
 
-  await expect(page.locator('.item-messagebox')).toContainText(
-    /Toode lisati ostukorvi|added to (shopping )?cart/i
-  );
-  await expect(page.locator('.cart-products')).toContainText('1');
-  await page.locator('.cartbtn-event.back').click();
-});
+    await expect(page.locator('.item-messagebox')).toContainText(
+      /Toode lisati ostukorvi|added to (shopping )?cart/i
+    );
+    await expect(page.locator('.cart-products')).toContainText('1');
+    await page.locator('.cartbtn-event.back').click();
+  });
 
   test('Test add second book to cart', async () => {
     await addToCartByIndex(1);
@@ -86,7 +86,7 @@ test.describe('Add Books to Shopping Cart', () => {
 
     let basketSumOfOne = await returnBasketSum();
     let basketSumTotal = await returnBasketSumTotal();
-    
+
     expect(basketSumTotal).toBeCloseTo(basketSumOfOne, 2);
     expect(basketSumOfOne).toBeLessThan(basketSumOfTwo);
     await expect(page.locator('.tbl-row .title a')).toHaveCount(1);
@@ -96,24 +96,24 @@ test.describe('Add Books to Shopping Cart', () => {
   });
 
   async function searchFor(keyword: string) {
-  const preferredInput = page
-    .getByRole('textbox', { name: /Pealkiri|Title|ISBN|märksõna|keyword/i })
-    .first();
-  const input = (await preferredInput.isVisible().catch(() => false))
-    ? preferredInput
-    : page.getByRole('textbox').first();
+    const preferredInput = page
+      .getByRole('textbox', { name: /Pealkiri|Title|ISBN|märksõna|keyword/i })
+      .first();
+    const input = (await preferredInput.isVisible().catch(() => false))
+      ? preferredInput
+      : page.getByRole('textbox').first();
 
-  await input.fill(keyword);
+    await input.fill(keyword);
 
-  const searchButton = page.getByRole('button', { name: /Search|Otsi/i }).first();
-  if (await searchButton.isVisible().catch(() => false)) {
-    await searchButton.click();
-  } else {
-    await input.press('Enter');
+    const searchButton = page.getByRole('button', { name: /Search|Otsi/i }).first();
+    if (await searchButton.isVisible().catch(() => false)) {
+      await searchButton.click();
+    } else {
+      await input.press('Enter');
+    }
+
+    await expect(page.locator('.sb-results-total').first()).toBeVisible({ timeout: 15_000 });
   }
-
-  await expect(page.locator('.sb-results-total').first()).toBeVisible({ timeout: 15_000 });
-}
 
   async function getResultsCount() {
     const resultsText = await page.locator('.sb-results-total').first().textContent();
@@ -121,30 +121,58 @@ test.describe('Add Books to Shopping Cart', () => {
   }
 
   async function addToCartByIndex(index: number) {
-  // Wait until results render
-  await expect(page.locator('.sb-results-total').first()).toBeVisible({ timeout: 15_000 });
+    // Ensure results page loaded
+    await expect(page.locator('.sb-results-total').first()).toBeVisible({ timeout: 15_000 });
 
-  // Click the first product title link in results grid/list.
-  // Kriso product cards typically have a title link inside product-content.
-  const productLinks = page.locator('.product-content a');
+    // Find a "product-like" link to open product page
+    const allLinks = page.getByRole('link');
+    const total = await allLinks.count();
 
-  await expect(productLinks.first()).toBeVisible({ timeout: 15_000 });
+    const candidateIndexes: number[] = [];
+    const maxChecks = Math.min(total, 120);
 
-  const count = await productLinks.count();
-  const safeIndex = Math.min(index, count - 1);
-  await productLinks.nth(safeIndex).click();
+    for (let i = 0; i < maxChecks; i += 1) {
+      const link = allLinks.nth(i);
+      const text = ((await link.innerText().catch(() => '')) || '').trim();
+      if (!text) continue;
 
-  // On product page: try common add-to-cart controls
-  const addToCart = page
-    .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i })
-    .or(page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i }))
-    .or(page.locator('input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i]'))
-    .or(page.locator('button:has-text("Lisa ostukorvi"), button:has-text("Add to cart")'))
-    .first();
+      // Skip obvious header/nav links
+      if (
+        /bestsellers|e-platforms|books in stock|help|log in|new account|categories|books|e-books|music books|language teaching materials|special offers|advanced search|shopping basket|wish list|your account|eng/i.test(
+          text.toLowerCase()
+        )
+      ) {
+        continue;
+      }
 
-  await expect(addToCart).toBeVisible({ timeout: 15_000 });
-  await addToCart.click();
-}
+      // Product titles are usually longer than a couple characters
+      if (text.length < 6) continue;
+
+      if (await link.isVisible().catch(() => false)) {
+        candidateIndexes.push(i);
+      }
+
+      if (candidateIndexes.length >= 20) break;
+    }
+
+    if (candidateIndexes.length === 0) {
+      throw new Error('No product-like links found on the results page.');
+    }
+
+    const safe = Math.min(index, candidateIndexes.length - 1);
+    await allLinks.nth(candidateIndexes[safe]).click();
+
+    // Now on product page: click add-to-cart using multiple fallbacks
+    const addToCart = page
+      .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i })
+      .or(page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i }))
+      .or(page.locator('input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i]'))
+      .or(page.locator('form[action*="cart" i] button, form[action*="basket" i] button'))
+      .first();
+
+    await expect(addToCart).toBeVisible({ timeout: 15_000 });
+    await addToCart.click();
+  }
 
   async function returnBasketSum() {
     let basketSum = 0;
