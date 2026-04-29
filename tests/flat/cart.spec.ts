@@ -45,11 +45,17 @@ test.describe('Add Books to Shopping Cart', () => {
   });
 
   test('Test add book to cart', async () => {
-    await addToCartByIndex(0);
-    await expect(page.locator('.item-messagebox')).toContainText(/Toode lisati ostukorvi|added to (shopping )?cart/i);
-    await expect(page.locator('.cart-products')).toContainText('1');
-    await page.locator('.cartbtn-event.back').click();
-  });
+  // ensure we are on a results page with products
+  await searchFor('tolkien');
+
+  await addToCartByIndex(0);
+
+  await expect(page.locator('.item-messagebox')).toContainText(
+    /Toode lisati ostukorvi|added to (shopping )?cart/i
+  );
+  await expect(page.locator('.cart-products')).toContainText('1');
+  await page.locator('.cartbtn-event.back').click();
+});
 
   test('Test add second book to cart', async () => {
     await addToCartByIndex(1);
@@ -90,53 +96,55 @@ test.describe('Add Books to Shopping Cart', () => {
   });
 
   async function searchFor(keyword: string) {
-    const preferredInput = page
-      .getByRole('textbox', { name: /Pealkiri|Title|ISBN|märksõna|keyword/i })
-      .first();
-    const input = (await preferredInput.isVisible().catch(() => false))
-      ? preferredInput
-      : page.getByRole('textbox').first();
+  const preferredInput = page
+    .getByRole('textbox', { name: /Pealkiri|Title|ISBN|märksõna|keyword/i })
+    .first();
+  const input = (await preferredInput.isVisible().catch(() => false))
+    ? preferredInput
+    : page.getByRole('textbox').first();
 
-    await input.fill(keyword);
-    const searchButton = page.getByRole('button', { name: /Search|Otsi/i }).first();
-    if (await searchButton.isVisible().catch(() => false)) {
-      await searchButton.click();
-      return;
-    }
+  await input.fill(keyword);
 
+  const searchButton = page.getByRole('button', { name: /Search|Otsi/i }).first();
+  if (await searchButton.isVisible().catch(() => false)) {
+    await searchButton.click();
+  } else {
     await input.press('Enter');
   }
 
+  await expect(page.locator('.sb-results-total').first()).toBeVisible({ timeout: 15_000 });
+}
+
   async function getResultsCount() {
-    const resultsText = await page.locator('.sb-results-total').textContent();
+    const resultsText = await page.locator('.sb-results-total').first().textContent();
     return Number((resultsText || '').replace(/\D/g, '')) || 0;
   }
 
   async function addToCartByIndex(index: number) {
-    const addToCartLinks = page.getByRole('link', { name: /Lisa ostukorvi|Add to cart/i });
-    const count = await addToCartLinks.count();
+  // Wait until results render
+  await expect(page.locator('.sb-results-total').first()).toBeVisible({ timeout: 15_000 });
 
-    const visibleIndexes: number[] = [];
-    const maxChecks = Math.min(count, 20);
+  // Click the first product title link in results grid/list.
+  // Kriso product cards typically have a title link inside product-content.
+  const productLinks = page.locator('.product-content a');
 
-    for (let i = 0; i < maxChecks; i += 1) {
-      if (await addToCartLinks.nth(i).isVisible().catch(() => false)) {
-        visibleIndexes.push(i);
-      }
-    }
+  await expect(productLinks.first()).toBeVisible({ timeout: 15_000 });
 
-    if (visibleIndexes.length > 0) {
-      await addToCartLinks.nth(visibleIndexes[Math.min(index, visibleIndexes.length - 1)]).click();
-      return;
-    }
+  const count = await productLinks.count();
+  const safeIndex = Math.min(index, count - 1);
+  await productLinks.nth(safeIndex).click();
 
-    if (count > 0) {
-      await addToCartLinks.nth(Math.min(index, count - 1)).click();
-      return;
-    }
+  // On product page: try common add-to-cart controls
+  const addToCart = page
+    .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i })
+    .or(page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i }))
+    .or(page.locator('input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i]'))
+    .or(page.locator('button:has-text("Lisa ostukorvi"), button:has-text("Add to cart")'))
+    .first();
 
-    throw new Error('No add-to-cart links found on the page.');
-  }
+  await expect(addToCart).toBeVisible({ timeout: 15_000 });
+  await addToCart.click();
+}
 
   async function returnBasketSum() {
     let basketSum = 0;
