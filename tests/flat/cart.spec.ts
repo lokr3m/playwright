@@ -168,7 +168,11 @@ test.describe('Add Books to Shopping Cart', () => {
     const addToCart = page
       .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to (cart|basket)/i })
       .or(page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to (cart|basket)/i }))
-      .or(page.locator('input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i]'))
+      .or(
+        page.locator(
+          'input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i], input[type="submit"][value*="basket" i]'
+        )
+      )
       .or(page.locator('form[action*="cart" i] button, form[action*="basket" i] button'))
       .first();
 

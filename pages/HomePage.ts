@@ -198,7 +198,11 @@ export class HomePage extends BasePage {
       .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to (cart|basket)/i })
       .or(this.page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to (cart|basket)/i }))
       // common input submit buttons
-      .or(this.page.locator('input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i]'))
+      .or(
+        this.page.locator(
+          'input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i], input[type="submit"][value*="basket" i]'
+        )
+      )
       // common forms/buttons without good accessible name
       .or(this.page.locator('form[action*="cart" i] button, form[action*="basket" i] button'))
       .first();
