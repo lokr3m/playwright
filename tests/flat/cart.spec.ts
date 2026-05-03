@@ -123,6 +123,13 @@ test.describe('Add Books to Shopping Cart', () => {
   }
 
   async function addToCartByIndex(index: number) {
+    // If we're not on results page anymore, restart from home + search
+    const resultsVisible = await page.locator('.sb-results-total').first().isVisible().catch(() => false);
+    if (!resultsVisible) {
+      await page.goto('https://www.kriso.ee/');
+      await searchFor('tolkien');
+    }
+
     // Ensure results page loaded
     await expect(page.locator('.sb-results-total').first()).toBeVisible({ timeout: 15_000 });
 

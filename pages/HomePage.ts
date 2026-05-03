@@ -148,6 +148,13 @@ export class HomePage extends BasePage {
   }
 
   private async clickVisibleAddToCartByIndex(index: number) {
+    // If we're not on results page anymore, restart from home + search
+    const resultsVisible = await this.resultsTotal.first().isVisible().catch(() => false);
+    if (!resultsVisible) {
+      await this.page.goto(this.url, { waitUntil: 'domcontentloaded' });
+      await this.searchFor('tolkien');
+    }
+
     // Wait for results page
     await expect(this.resultsTotal.first()).toBeVisible({ timeout: 15_000 });
 
