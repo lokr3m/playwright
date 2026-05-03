@@ -18,7 +18,7 @@ export class HomePage extends BasePage {
   constructor(page: Page) {
     super(page);
     this.resultsTotal = this.page.locator('.sb-results-total');
-    this.addToCartLinks = this.page.getByRole('link', { name: /Lisa ostukorvi|Add to cart/i });
+    this.addToCartLinks = this.page.getByRole('link', { name: /Lisa ostukorvi|Add to (cart|basket)/i });
     this.addToCartMessage = this.page.locator('.item-messagebox');
     this.cartCount = this.page.locator('.cart-products');
     this.backButton = this.page.locator('.cartbtn-event.back');
@@ -101,7 +101,7 @@ export class HomePage extends BasePage {
   }
 
   async verifyAddToCartMessage() {
-    await expect(this.addToCartMessage).toContainText(/Toode lisati ostukorvi|added to (shopping )?cart/i);
+    await expect(this.addToCartMessage).toContainText(/Toode lisati ostukorvi|added to (shopping )?(cart|basket)/i);
   }
 
   async verifyCartCount(expectedCount: number) {
@@ -195,10 +195,14 @@ export class HomePage extends BasePage {
 
     // Now on product page: click add-to-cart (multiple fallbacks)
     const addToCart = this.page
-      .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i })
-      .or(this.page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i }))
+      .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to (cart|basket)/i })
+      .or(this.page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to (cart|basket)/i }))
       // common input submit buttons
-      .or(this.page.locator('input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i]'))
+      .or(
+        this.page.locator(
+          'input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i], input[type="submit"][value*="basket" i]'
+        )
+      )
       // common forms/buttons without good accessible name
       .or(this.page.locator('form[action*="cart" i] button, form[action*="basket" i] button'))
       .first();

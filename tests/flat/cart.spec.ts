@@ -51,7 +51,7 @@ test.describe('Add Books to Shopping Cart', () => {
     await addToCartByIndex(0);
 
     await expect(page.locator('.item-messagebox')).toContainText(
-      /Toode lisati ostukorvi|added to (shopping )?cart/i
+      /Toode lisati ostukorvi|added to (shopping )?(cart|basket)/i
     );
     await expect(page.locator('.cart-products')).toContainText('1');
     await page.locator('.cartbtn-event.back').click();
@@ -59,7 +59,9 @@ test.describe('Add Books to Shopping Cart', () => {
 
   test('Test add second book to cart', async () => {
     await addToCartByIndex(1);
-    await expect(page.locator('.item-messagebox')).toContainText(/Toode lisati ostukorvi|added to (shopping )?cart/i);
+    await expect(page.locator('.item-messagebox')).toContainText(
+      /Toode lisati ostukorvi|added to (shopping )?(cart|basket)/i
+    );
     await expect(page.locator('.cart-products')).toContainText('2');
   });
 
@@ -164,9 +166,13 @@ test.describe('Add Books to Shopping Cart', () => {
 
     // Now on product page: click add-to-cart using multiple fallbacks
     const addToCart = page
-      .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i })
-      .or(page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to cart/i }))
-      .or(page.locator('input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i]'))
+      .getByRole('button', { name: /Lisa ostukorvi|Ostukorvi|Add to (cart|basket)/i })
+      .or(page.getByRole('link', { name: /Lisa ostukorvi|Ostukorvi|Add to (cart|basket)/i }))
+      .or(
+        page.locator(
+          'input[type="submit"][value*="ostukorvi" i], input[type="submit"][value*="cart" i], input[type="submit"][value*="basket" i]'
+        )
+      )
       .or(page.locator('form[action*="cart" i] button, form[action*="basket" i] button'))
       .first();
 
